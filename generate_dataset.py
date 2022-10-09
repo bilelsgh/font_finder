@@ -96,18 +96,16 @@ def split_dataset(train_prop, src_dataset_path, dest_dataset_path):
         # Split among test and train
         for idx,image in enumerate( os.listdir(f"{src_dataset_path}/{class_}") ) :
             step = "train" if idx <= size_training_dataset else "test"
-            try:
-                shutil.copyfile(f"{src_dataset_path}/{step}/{class_}/{image}", f"{dest_dataset_path}/{class_}/{image}")
-            except:
-                try:
-                    os.mkdir(f"{src_dataset_path}/{step}/{class_}")
-                except:
-                    os.mkdir(f"{src_dataset_path}/{step}")
-                    os.mkdir(f"{src_dataset_path}/{step}/{class_}")
-                
-                shutil.copyfile(f"{src_dataset_path}/{class_}/{image}", f"{dest_dataset_path}/{class_}/{image}")
 
-       
+            if step not in os.listdir(f"{dest_dataset_path}"):
+                os.mkdir(f"{dest_dataset_path}/{step}")
+            
+            if class_ not in os.listdir(f"{dest_dataset_path}/{step}"):
+                os.mkdir(f"{dest_dataset_path}/{step}/{class_}")
+            
+            shutil.copyfile(f"{src_dataset_path}/{class_}/{image}", f"{dest_dataset_path}/{step}/{class_}/{image}")
+
+           
 
 if __name__ == "__main__":
     
