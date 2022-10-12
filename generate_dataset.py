@@ -1,7 +1,6 @@
-from multiprocessing.sharedctypes import Value
 import shutil
 import random
-from cv2 import split
+import cv2
 import numpy as np
 from dotenv import load_dotenv
 import os
@@ -32,34 +31,40 @@ def get_correct_font_size(word, font):
     return font_size, font_obj.getsize(word)
 
 
-def text_to_image(word, font, path, index):
+def text_to_image(word, font, index, negative=True, path=-1):
     """
     Create an image from a text
     :param word: Word to write (string)
     :param font: Font to use (string)
+    :param negative: white text and black background if True, otherwise the opposite 
     :param path: Saving path
     :param index: the index-th word generated with the font 'font'
     """
     font_size, text_size = get_correct_font_size(word,font)
+    bg_color =  (0,0,0) if negative else (255,255,255)
+    text_color =  (0,0,0) if not negative else (255,255,255)
 
     # Create an image containing <word>
-    text = Image.new('RGB', (text_size[0], text_size[1]), (0, 0, 0))
+    text = Image.new('RGB', (text_size[0], text_size[1]), bg_color)
     draw = ImageDraw.Draw(text)
     font_obj = ImageFont.truetype(font, font_size)
-    draw.text((0, 0), word, (255,255,255), font=font_obj)
+    draw.text((0, 0), word, text_color, font=font_obj)
 
     # Paste the text on a bigger image
-    white = Image.new('RGB', (WIDTH,HEIGHT), (0, 0, 0))
-    white.paste( text, ( (WIDTH - text_size[0])//2 , 0) )
+    bg = Image.new('RGB', (WIDTH,HEIGHT), bg_color)
+    bg.paste( text, ( (WIDTH - text_size[0])//2 , 0) )
 
     # Save
-    font_folder = font.split("/")[-1].split(".")[0].replace(" ","_")
-    path = path.replace("\\","/")
-    try:
-        white.save(f"{path}/{font_folder}/{index}.jpg")
-    except:
-        os.mkdir(f"{path}/{font_folder}")
-        white.save(f"{path}/{font_folder}/{index}.jpg")
+    if path != -1 :
+        font_folder = font.split("/")[-1].split(".")[0].replace(" ","_")
+        path = path.replace("\\","/")
+        try:
+            bg.save(f"{path}/{font_folder}/{index}.jpg")
+        except:
+            os.mkdir(f"{path}/{font_folder}")
+            bg.save(f"{path}/{font_folder}/{index}.jpg")
+    
+    return bg
 
 
 def create_images(path, nb_font=-1):
@@ -78,7 +83,7 @@ def create_images(path, nb_font=-1):
     for font in fonts :
         index = 1
         for word in words :
-            text_to_image(word, f"data/fonts/{font}", path, index)
+            text_to_image(word, f"data/fonts/{font}", index, path)
             index += 1
         print(f"- {font}: all images have been generated")
 
@@ -106,6 +111,26 @@ def split_dataset(train_prop, src_dataset_path, dest_dataset_path):
             shutil.copyfile(f"{src_dataset_path}/{class_}/{image}", f"{dest_dataset_path}/{step}/{class_}/{image}")
 
            
+def get_images_labels(dataset_path):
+    """
+    From a dataset get an array containing images and another containing labels
+    :param dataset_path: Path pointing to the dataset containing every class
+    :return: Two np arrays images and labels + dict get the class name from an integer
+    """
+
+    images = []
+    labels = []
+    int_to_class = {}
+    int_label = 0
+
+    for idx,class_ in enumerate(os.listdir(dataset_path)):
+        int_to_class[int(idx)] = class_
+        for img in os.listdir(f"{dataset_path}/{class_}"):
+            images.append( cv2.imread(f"{dataset_path}/{class_}/{img}", cv2.IMREAD_GRAYSCALE) )
+            labels.append(int_label)
+        int_label += 1
+
+    return np.array( images,  dtype="float"), np.array( labels,  dtype="float"), int_to_class
 
 if __name__ == "__main__":
     
