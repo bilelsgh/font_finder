@@ -5,7 +5,7 @@ import os
 from model import Model
 from PIL import Image
 import numpy as np
-from generate_dataset import text_to_image
+from utils.generate_dataset import text_to_image
 
 
 # Init
@@ -33,11 +33,16 @@ with pred:
     if uploaded_image:
         image = Image.open(uploaded_image).convert('L')
         img_array = np.array( [np.array(image)] )
-        st.write(img_array.shape)
         font = model.predict(img_array)
+        st.success("I'm already done ! B-)")
+        
+        st.markdown("""---""")
 
-        st.success(f"The font is : {font}")
-        st.image( text_to_image("Your font", f"data/fonts/{font.replace('_',' ')}.ttf", 1, False) )
+        st.markdown(f"### Mmmh.. it looks like _{font}_")
+        st.image( text_to_image("Your", f"data/fonts/{font.replace('_',' ')}.ttf", 1, False) )
+        st.image( text_to_image("font", f"data/fonts/{font.replace('_',' ')}.ttf", 1, False) )
+        st.image( text_to_image("1234", f"data/fonts/{font.replace('_',' ')}.ttf", 1, False) )
+
 # Generate #
 with gen:
     st.header("Generate a font")

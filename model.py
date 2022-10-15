@@ -1,7 +1,7 @@
 # TensorFlow and tf.keras
 import tensorflow as tf
 from tensorflow.keras import datasets, layers, models
-from generate_dataset import get_images_labels
+from utils.generate_dataset import get_images_labels
 
 
 import os
